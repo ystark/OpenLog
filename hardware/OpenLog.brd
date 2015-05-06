@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.05" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.0001" altunitdist="inch" altunit="inch"/>
+<grid distance="0.05" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.005" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
@@ -162,7 +162,7 @@
 <text x="30.74161875" y="-7.4041" size="0.8128" layer="21" ratio="15">GND</text>
 <text x="33.380678125" y="-7.40918125" size="0.8128" layer="21" ratio="15">BLK</text>
 <text x="20.584159375" y="-7.366" size="0.8128" layer="21" ratio="15">GRN</text>
-<text x="24.952959375" y="5.300978125" size="0.889" layer="21" ratio="15">OpenLog</text>
+<text x="25.206959375" y="5.300978125" size="0.889" layer="21" ratio="15">OpenLog</text>
 <dimension x1="13.97" y1="-10.16" x2="13.97" y2="8.89" x3="12.7" y3="-0.635" textsize="0.8128" textratio="15" layer="47" unit="inch" visible="yes"/>
 <dimension x1="19.05" y1="13.97" x2="36.83" y2="13.97" x3="27.94" y3="15.24" textsize="0.8128" textratio="15" layer="47" unit="inch" visible="yes"/>
 <text x="28.366721875" y="-19.177" size="1.778" layer="51" font="vector" ratio="10">N. Seidle</text>
