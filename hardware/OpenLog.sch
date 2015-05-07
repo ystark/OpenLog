@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.1.0">
+<eagle version="6.4">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -9326,7 +9326,7 @@ Used, eg, on the Arduino Pro/ Pro Mini boards.&lt;br&gt;
 <text x="2.54" y="7.62" size="1.778" layer="97">This board is meant to couple directly to Arduino Pro and Pro Mini.</text>
 <text x="2.54" y="5.08" size="1.778" layer="97">It cannot be directly connected to an FTDI Basic.</text>
 <text x="2.54" y="2.54" size="1.778" layer="97">To connect OpenLog to an FTDI basic, you will need to swap TX and RX lines between boards.</text>
-<text x="238.76" y="7.62" size="2.54" layer="94">v01</text>
+<text x="238.76" y="7.62" size="2.54" layer="94">v12</text>
 <text x="165.354" y="11.43" size="2.54" layer="94">N. Seidle</text>
 <text x="148.844" y="7.112" size="2.54" layer="94">Revised by: Patrick Alberts</text>
 <wire x1="0" y1="109.22" x2="73.66" y2="109.22" width="0.2032" layer="97" style="shortdash"/>
