@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.4">
+<eagle version="7.1.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -9334,6 +9334,7 @@ Used, eg, on the Arduino Pro/ Pro Mini boards.&lt;br&gt;
 <wire x1="73.66" y1="109.22" x2="132.08" y2="109.22" width="0.2032" layer="97" style="shortdash"/>
 <wire x1="132.08" y1="109.22" x2="132.08" y2="185.42" width="0.2032" layer="97" style="shortdash"/>
 <wire x1="132.08" y1="109.22" x2="132.08" y2="0" width="0.2032" layer="97" style="shortdash"/>
+<text x="2.54" y="13.462" size="1.778" layer="97">0.8mm Thin PCB</text>
 </plain>
 <instances>
 <instance part="C10" gate="G$1" x="55.88" y="139.7"/>
