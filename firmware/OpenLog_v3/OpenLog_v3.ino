@@ -7,7 +7,7 @@
  http://creativecommons.org/licenses/by-sa/3.0/
  Feel free to use, distribute, and sell varients of OpenLog. All we ask is that you include attribution of 'Based on OpenLog by SparkFun'.
  
- OpenLog is based on the work of Bill Greiman and sdfatlib: http://code.google.com/p/sdfatlib/
+ OpenLog is based on the work of Bill Greiman and sdfatlib: https://github.com/greiman/SdFat
  
  OpenLog is a simple serial logger based on the ATmega328 running at 16MHz. The ATmega328
  is able to talk to high capacity (larger than 2GB) SD cards. The whole purpose of this
@@ -174,6 +174,11 @@
  
  Increased escape character limits to 0 and 254. If set to zero, it will not check for escape characters.
  
+ v3.4
+
+ 27,408 Using the latest SdFat lib from Bill: https://github.com/greiman/SdFat
+ Using Arduino v1.6.4
+
  */
 
 #include <SdFat.h> //We do not use the built-in SD.h file because it calls Serial.print
@@ -274,8 +279,7 @@ const byte statled2 = 13; //This is the SPI LED, indicating SD traffic
 #define EMBEDDED_END_MARKER	0x08
 #endif
 
-Sd2Card card;
-SdVolume volume;
+SdFat sd;
 SdFile currentDirectory;
 
 long setting_uart_speed; //This is the baud rate that the system runs at, default is 9600. Can be 1,200 to 1,000,000
@@ -377,10 +381,10 @@ void setup(void)
   NewSerial.print(F("1"));
 
   //Setup SD & FAT
-  if (!card.init(SPI_FULL_SPEED)) systemError(ERROR_CARD_INIT);
-  if (!volume.init(&card)) systemError(ERROR_VOLUME_INIT);
+  if (!sd.begin(SS, SPI_FULL_SPEED)) systemError(ERROR_CARD_INIT);
+
   currentDirectory.close(); //We close the cD before opening root. This comes from QuickStart example. Saves 4 bytes.
-  if (!currentDirectory.openRoot(&volume)) systemError(ERROR_ROOT_INIT);
+  if (!currentDirectory.openRoot(sd.vol())) systemError(ERROR_ROOT_INIT);
 
   NewSerial.print(F("2"));
 
@@ -726,10 +730,10 @@ void check_emergency_reset(void)
   set_default_settings(); //Reset baud, escape characters, escape number, system mode
 
   //Try to setup the SD card so we can record these new settings
-  if (!card.init()) systemError(ERROR_CARD_INIT);
-  if (!volume.init(&card)) systemError(ERROR_VOLUME_INIT);
+  if (!sd.init()) systemError(ERROR_CARD_INIT);
+
   currentDirectory.close(); //We close the cD before opening root. This comes from QuickStart example. Saves 4 bytes.
-  if (!currentDirectory.openRoot(&volume)) systemError(ERROR_ROOT_INIT);
+  if (!currentDirectory.openRoot(sd.vol())) systemError(ERROR_ROOT_INIT);
 
   record_config_file(); //Record new config settings
 
@@ -859,7 +863,7 @@ void read_config_file(void)
 {
   SdFile rootDirectory;
   SdFile configFile;  
-  if (!rootDirectory.openRoot(&volume)) systemError(ERROR_ROOT_INIT); // open the root directory
+  if (!rootDirectory.openRoot(sd.vol())) systemError(ERROR_ROOT_INIT); // open the root directory
 
   char configFileName[strlen(CFG_FILENAME)]; //Limited to 8.3
   strcpy_P(configFileName, PSTR(CFG_FILENAME)); //This is the name of the config file. 'config.sys' is probably a bad idea.
@@ -1071,7 +1075,7 @@ void record_config_file(void)
   //next power cycles. To prevent this, we will open another instance of the file system, then close it down when we are done.
   SdFile rootDirectory;
   SdFile myFile;
-  if (!rootDirectory.openRoot(&volume)) systemError(ERROR_ROOT_INIT); // open the root directory
+  if (!rootDirectory.openRoot(sd.vol())) systemError(ERROR_ROOT_INIT); // open the root directory
 
   char configFileName[strlen(CFG_FILENAME)];
   strcpy_P(configFileName, PSTR(CFG_FILENAME)); //This is the name of the config file. 'config.sys' is probably a bad idea.
@@ -1206,7 +1210,7 @@ void command_shell(void)
       currentDirectory.close();
 
       //Open the root directory
-      if (!currentDirectory.openRoot(&volume)) systemError(ERROR_ROOT_INIT);
+      if (!currentDirectory.openRoot(sd.vol())) systemError(ERROR_ROOT_INIT);
       memset(folderTree, 0, sizeof(folderTree)); //Clear folder tree
       if ((feedback_mode & EXTENDED_INFO) > 0)
         NewSerial.println(F("File system initialized"));
@@ -1260,7 +1264,7 @@ void command_shell(void)
       if ((feedback_mode & EXTENDED_INFO) > 0)
       {
         NewSerial.print(F("Volume is FAT"));
-        NewSerial.println(volume.fatType(), DEC);
+        NewSerial.println(sd.fatType(), DEC);
       }
 
       if (count_cmd_args() == 1)  // has no arguments
@@ -1291,7 +1295,7 @@ void command_shell(void)
         continue;
 
       SdFile newDirectory;
-      if (!newDirectory.makeDir(&currentDirectory, command_arg)) {
+      if (!newDirectory.mkdir(&currentDirectory, command_arg)) {
         if ((feedback_mode & EXTENDED_INFO) > 0)
         {
           NewSerial.print(F("error creating directory: "));
@@ -1337,7 +1341,7 @@ void command_shell(void)
       {
         tmp_var = 0;
         if (tempFile.isDir() || tempFile.isSubDir())
-          tmp_var = tempFile.rmDir();
+          tmp_var = tempFile.rmdir();
         else
         {
           tempFile.close();
@@ -1364,7 +1368,7 @@ void command_shell(void)
       {
         if (!tempFile.isDir() && !tempFile.isSubDir()) // Remove only files
         {
-          if (tempFile.getFilename(fname)) // Get the filename of the object we're looking at
+          if (tempFile.getName(fname, sizeof(fname))) // Get the filename of the object we're looking at
           {
             if (wildcmp(command_arg, fname))  // See if it matches the wildcard
             {
@@ -1585,9 +1589,10 @@ void command_shell(void)
     }
     else if(strcmp_P(command_arg, PSTR("disk")) == 0)
     {
+      SdSpiCard *card = sd.card();
       //Print card type
       NewSerial.print(F("\nCard type: "));
-      switch(card.type()) {
+      switch(card->type()) {
       case SD_CARD_TYPE_SD1:
         NewSerial.println(F("SD1"));
         break;
@@ -1603,7 +1608,7 @@ void command_shell(void)
 
       //Print card information
       cid_t cid;
-      if (!card.readCID(&cid)) {
+      if (!card->readCID(&cid)) {
         NewSerial.print(F("readCID failed"));
         continue;
       }
@@ -1634,8 +1639,8 @@ void command_shell(void)
       NewSerial.println(2000 + cid.mdt_year_low + (cid.mdt_year_high <<4));
 
       csd_t csd;
-      uint32_t cardSize = card.cardSize();
-      if (cardSize == 0 || !card.readCSD(&csd)) {
+      uint32_t cardSize = card->cardSize();
+      if (cardSize == 0 || !card->readCSD(&csd)) {
         NewSerial.println(F("readCSD failed"));
         continue;
       }
@@ -1950,7 +1955,7 @@ byte gotoDir(char *dir)
     currentDirectory.close();
 
     // open the root directory
-    if (!currentDirectory.openRoot(&volume)) systemError(ERROR_ROOT_INIT);
+    if (!currentDirectory.openRoot(sd.vol())) systemError(ERROR_ROOT_INIT);
     int8_t index = getNextFolderTreeIndex() - 1;
     if (index >= 0)
     {
@@ -1992,7 +1997,7 @@ byte gotoDir(char *dir)
 
 void print_menu(void)
 {
-  NewSerial.println(F("OpenLog v3.3"));
+  NewSerial.println(F("OpenLog v3.4"));
   NewSerial.println(F("Basic commands:"));
   NewSerial.println(F("new <file>\t\t: Creates <file>"));
   NewSerial.println(F("append <file>\t\t: Appends text to end of <file>"));
@@ -2187,7 +2192,7 @@ void system_menu(void)
 
       //Remove the config file if it is there
       SdFile rootDirectory;
-      if (!rootDirectory.openRoot(&volume)) error("openRoot"); // open the root directory
+      if (!rootDirectory.openRoot(sd.vol())) error("openRoot"); // open the root directory
 
       char configFileName[strlen(CFG_FILENAME)];
       strcpy_P(configFileName, PSTR(CFG_FILENAME)); //This is the name of the config file. 'config.sys' is probably a bad idea.
@@ -2471,7 +2476,7 @@ byte lsPrintNext(SdFile * theDir, char * cmdStr, byte flags, byte indent)
   // Find next available object to display in the specified directory
   while ((open_stat = tempFile.openNext(theDir, O_READ)))
   {
-    if (tempFile.getFilename(fname)) // Get the filename of the object we're looking at
+    if (tempFile.getName(fname, sizeof(fname))) // Get the filename of the object we're looking at
     {
       if (tempFile.isDir() || tempFile.isFile() || tempFile.isSubDir())
       {
